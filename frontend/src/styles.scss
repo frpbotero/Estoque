@@ -1,0 +1,390 @@
+/* ---------------------------------------------------------------------------
+   Design system — interface corporativa interna.
+   Base branca/cinza, grafite para texto e navegação, laranja como accent usado
+   com moderação. Os HEX abaixo são aproximações: se houver manual de marca
+   interno, ele prevalece — troque apenas os tokens desta seção.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --accent: #ec6608;
+  --accent-strong: #cc5406;
+  --accent-soft: #fff2e6;
+
+  --graphite-900: #16181d;
+  --graphite-800: #22252c;
+  --graphite-700: #343a44;
+  --graphite-500: #5c6472;
+  --graphite-400: #838b99;
+
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --surface-sunken: #eef0f4;
+  --border: #dfe3ea;
+  --border-strong: #c7cdd8;
+
+  --success: #1f8a4c;
+  --success-soft: #e8f6ee;
+  --warning: #b06a00;
+  --warning-soft: #fdf3e2;
+  --danger: #c0392b;
+  --danger-soft: #fdeceb;
+  --info: #2f6fbb;
+  --info-soft: #eaf1fa;
+
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(22, 24, 29, 0.06);
+
+  --sidebar-width: 236px;
+  --topbar-height: 58px;
+
+  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--graphite-800);
+  background: var(--surface-muted);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--graphite-900);
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 20px;
+}
+h2 {
+  font-size: 16px;
+}
+h3 {
+  font-size: 14px;
+}
+
+a {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Cartões e superfícies
+   -------------------------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card__body {
+  padding: 18px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.page-header p {
+  margin: 4px 0 0;
+  color: var(--graphite-500);
+}
+
+.muted {
+  color: var(--graphite-500);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   Botões
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--graphite-800);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-sunken);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.btn--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn--sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   Formulários
+   -------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field > label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--graphite-700);
+}
+
+.field > label .req {
+  color: var(--accent-strong);
+}
+
+input,
+select,
+textarea {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  color: var(--graphite-900);
+  width: 100%;
+}
+
+textarea {
+  height: auto;
+  min-height: 76px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field__error {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.grid {
+  display: grid;
+  gap: 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* --------------------------------------------------------------------------
+   Tabelas
+   -------------------------------------------------------------------------- */
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+thead th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--graphite-500);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: var(--surface-muted);
+}
+
+tbody tr.clickable {
+  cursor: pointer;
+}
+
+.empty {
+  padding: 40px 18px;
+  text-align: center;
+  color: var(--graphite-400);
+}
+
+/* --------------------------------------------------------------------------
+   Badges de status
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge--available {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.badge--assigned {
+  background: var(--info-soft);
+  color: var(--info);
+}
+.badge--maintenance {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.badge--reserved {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.badge--retired,
+.badge--disposed {
+  background: var(--surface-sunken);
+  color: var(--graphite-500);
+}
+
+/* --------------------------------------------------------------------------
+   Utilitários
+   -------------------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.toolbar input[type='search'] {
+  max-width: 320px;
+}
+
+.toolbar select {
+  width: auto;
+  min-width: 150px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.alert--error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.alert--info {
+  background: var(--info-soft);
+  color: var(--info);
+}

@@ -1,0 +1,278 @@
+// ---------------------------------------------------------------------------
+// TI Warehouse — modelo de dados
+//
+// Princípio central: o Asset é a identidade permanente do equipamento.
+// Todo evento do ciclo de vida vira uma linha imutável em AssetMovement.
+// Os campos "current*" do Asset são apenas uma projeção de leitura rápida —
+// a verdade histórica está sempre na timeline de movimentações.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum AssetStatus {
+  AVAILABLE // disponível no estoque
+  ASSIGNED // entregue a um colaborador
+  MAINTENANCE // em manutenção
+  RESERVED // reservado
+  RETIRED // retirado de operação
+  DISPOSED // descartado
+}
+
+enum AssetCondition {
+  NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  DAMAGED
+  INOPERATIVE
+}
+
+enum MovementType {
+  PURCHASE_ENTRY
+  ASSIGNMENT
+  RETURN
+  MAINTENANCE
+  MAINTENANCE_RETURN
+  RETIREMENT
+  DISPOSAL
+}
+
+// ---------------------------------------------------------------------------
+// Acesso
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String  @id @default(uuid())
+  name         String
+  email        String  @unique
+  passwordHash String
+  role         Role    @default(OPERATOR)
+  active       Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  refreshTokens      RefreshToken[]
+  assetsCreated      Asset[]         @relation("AssetCreatedBy")
+  assetsUpdated      Asset[]         @relation("AssetUpdatedBy")
+  purchasesResponsib Purchase[]      @relation("PurchaseResponsible")
+  movements          AssetMovement[] @relation("MovementPerformedBy")
+
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Organização
+// ---------------------------------------------------------------------------
+
+model Sector {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employees Employee[]
+  assets    Asset[]         @relation("AssetCurrentSector")
+  purchases Purchase[]
+  movements AssetMovement[]
+
+  @@map("sectors")
+}
+
+model Employee {
+  id           String  @id @default(uuid())
+  name         String
+  email        String? @unique
+  registration String? @unique // matrícula
+  sectorId     String
+  active       Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  sector        Sector          @relation(fields: [sectorId], references: [id])
+  assetsInUse   Asset[]         @relation("AssetCurrentEmployee")
+  movementsFrom AssetMovement[] @relation("MovementFromEmployee")
+  movementsTo   AssetMovement[] @relation("MovementToEmployee")
+
+  @@index([sectorId])
+  @@index([name])
+  @@map("employees")
+}
+
+model AssetCategory {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets Asset[]
+
+  @@map("asset_categories")
+}
+
+// ---------------------------------------------------------------------------
+// Ativo
+// ---------------------------------------------------------------------------
+
+model Asset {
+  id           String  @id @default(uuid())
+  assetTag     String  @unique // patrimônio
+  serialNumber String  @unique
+  manufacturer String
+  model        String
+  description  String?
+
+  categoryId String
+
+  status    AssetStatus    @default(AVAILABLE)
+  condition AssetCondition @default(NEW)
+  location  String?
+
+  // Projeção de leitura — sempre derivada da última movimentação.
+  currentEmployeeId String?
+  currentSectorId   String?
+
+  createdById String
+  updatedById String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete
+
+  category        AssetCategory  @relation(fields: [categoryId], references: [id])
+  currentEmployee Employee?      @relation("AssetCurrentEmployee", fields: [currentEmployeeId], references: [id])
+  currentSector   Sector?        @relation("AssetCurrentSector", fields: [currentSectorId], references: [id])
+  createdBy       User           @relation("AssetCreatedBy", fields: [createdById], references: [id])
+  updatedBy       User?          @relation("AssetUpdatedBy", fields: [updatedById], references: [id])
+  purchaseItem    PurchaseItem?
+  movements       AssetMovement[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([currentEmployeeId])
+  @@index([currentSectorId])
+  @@map("assets")
+}
+
+// ---------------------------------------------------------------------------
+// Aquisição
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id               String   @id @default(uuid())
+  number           String
+  series           String?
+  supplier         String
+  supplierDocument String? // CNPJ
+  issueDate        DateTime
+  fileUrl          String?
+  notes            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+
+  @@unique([number, series, supplier])
+  @@index([supplier])
+  @@map("invoices")
+}
+
+model Purchase {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  responsibleId String // usuário do TI que recebeu
+  sectorId      String // setor solicitante
+  receivedAt    DateTime @default(now())
+  notes         String?
+
+  createdAt DateTime @default(now())
+
+  invoice     Invoice        @relation(fields: [invoiceId], references: [id])
+  responsible User           @relation("PurchaseResponsible", fields: [responsibleId], references: [id])
+  sector      Sector         @relation(fields: [sectorId], references: [id])
+  items       PurchaseItem[]
+
+  @@index([invoiceId])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         String   @id @default(uuid())
+  purchaseId String
+  assetId    String   @unique
+  unitCost   Decimal? @db.Decimal(12, 2)
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  asset    Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([purchaseId])
+  @@map("purchase_items")
+}
+
+// ---------------------------------------------------------------------------
+// Histórico imutável
+// ---------------------------------------------------------------------------
+
+model AssetMovement {
+  id      String       @id @default(uuid())
+  assetId String
+  type    MovementType
+
+  fromEmployeeId String? // quem entregou / devolveu
+  toEmployeeId   String? // quem recebeu
+  sectorId       String?
+
+  condition   AssetCondition?
+  statusAfter AssetStatus
+  notes       String?
+
+  performedById String // usuário do sistema que registrou
+  createdAt     DateTime @default(now())
+
+  asset        Asset     @relation(fields: [assetId], references: [id])
+  fromEmployee Employee? @relation("MovementFromEmployee", fields: [fromEmployeeId], references: [id])
+  toEmployee   Employee? @relation("MovementToEmployee", fields: [toEmployeeId], references: [id])
+  sector       Sector?   @relation(fields: [sectorId], references: [id])
+  performedBy  User      @relation("MovementPerformedBy", fields: [performedById], references: [id])
+
+  @@index([assetId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+  @@map("asset_movements")
+}
