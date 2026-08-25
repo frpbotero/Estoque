@@ -12,4 +12,4 @@ else
 fi
 
 echo "==> Iniciando API"
-exec node dist/main
+exec node dist/src/main
